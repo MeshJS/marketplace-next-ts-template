@@ -1,6 +1,8 @@
 const ipfsUrl = "https://infura-ipfs.io/ipfs/";
 
 const imageToSrc = (input, mediaType = undefined) => {
+  if (input == null) return null;
+
   if (input.length === 0) {
     return null;
   }

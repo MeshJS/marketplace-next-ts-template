@@ -1,6 +1,4 @@
-import { AssetExtended, AssetMetadata } from "@meshsdk/core";
 import { useWallet } from "@meshsdk/react";
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { KoiosProvider } from "@meshsdk/core";
 import AssetImage from "@/components/AssetImage";
@@ -20,30 +18,6 @@ export default function Collection() {
   const { connected, wallet } = useWallet();
 
   async function getMetadata(assets) {
-    // let updatedAssets: Item[] = [];
-    // for (let i in assets) {
-    //   const asset = assets[i];
-    //   try {
-    //     const metadata = await blockchainProvider.fetchAssetMetadata(
-    //       asset.unit
-    //     );
-    //     let thisAsset: Item = {
-    //       unit: asset.unit,
-    //       metadata: {
-    //         image: metadata.image,
-    //         name: metadata.name,
-    //       },
-    //       owner: walletAddress,
-    //     };
-    //     updatedAssets.push(thisAsset);
-    //   } catch (error) {}
-    //   break; // todo remove
-    // }
-
-    // setAssets(updatedAssets);
-
-    ///
-
     let userAssetsMetadata = {};
     for (let i in assets) {
       const asset = assets[i];
@@ -53,7 +27,11 @@ export default function Collection() {
         );
         userAssetsMetadata[asset.unit] = metadata;
       } catch (error) {}
-      break; // todo remove
+
+      // for demo only, we restrict only 8 assets
+      if (parseInt(i) > 8) {
+        break;
+      }
     }
     return userAssetsMetadata;
   }
@@ -61,7 +39,6 @@ export default function Collection() {
   async function getUserListings() {
     const walletAddress = (await wallet.getUsedAddresses())[0];
     const _userListings = await getListingsUser(walletAddress);
-    console.log("_userListings", walletAddress, _userListings);
 
     let userListings = {};
     _userListings.map((item, i) => {
@@ -76,7 +53,6 @@ export default function Collection() {
       setLoading(true);
       const assets = await wallet.getAssets();
       const userListings = await getUserListings();
-      console.log("userListings", userListings);
       const userAssetsMetadata = await getMetadata(assets);
 
       // prepare Item[]
@@ -119,8 +95,6 @@ export default function Collection() {
       load();
     }
   }, [connected]);
-
-  console.log("-- assets", assets);
 
   return (
     <>

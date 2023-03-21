@@ -1,3 +1,4 @@
+import { addListing, updateListing, deleteListing } from "@/lib/axios";
 import { getMarketplace } from "@/lib/marketplace";
 import { Item } from "@/type/item";
 import { XMarkIcon } from "@heroicons/react/20/solid";
@@ -58,13 +59,13 @@ export default function AssetModal({
 
     try {
       const marketplace = getMarketplace(wallet);
-      const address = (await wallet.getUsedAddresses())[0];
       const txHash = await marketplace.purchaseAsset(
-        address,
+        showModalItem.listing?.seller,
         showModalItem.unit,
         showModalItem.listing?.price
       );
-      console.log("txHash", txHash);
+      const res = await deleteListing(showModalItem.unit);
+      setShowModalItem(undefined);
       setToastMessage("Item purchased");
     } catch (error) {
       console.error(error);
@@ -87,19 +88,21 @@ export default function AssetModal({
     try {
       const marketplace = getMarketplace(wallet);
       const address = (await wallet.getUsedAddresses())[0];
-      console.log(
-        222,
-        address,
-        showModalItem.unit,
-        parseInt(listPrice) * 1000000
-      );
+
       if (showModalItem.listing === undefined) {
         const txHash = await marketplace.listAsset(
           address,
           showModalItem.unit,
           parseInt(listPrice) * 1000000
         );
-        console.log("txHash", txHash);
+        const res = await addListing({
+          ...showModalItem,
+          listing: {
+            seller: address,
+            price: parseInt(listPrice) * 1000000,
+          },
+        });
+        setShowModalItem(undefined);
         setToastMessage("Item listed for sale");
       }
       if (showModalItem.listing) {
@@ -109,7 +112,16 @@ export default function AssetModal({
           showModalItem.listing?.price,
           parseInt(listPrice) * 1000000
         );
-        console.log("txHash", txHash);
+        let _updateListing = {
+          ...showModalItem,
+          listing: {
+            ...showModalItem.listing,
+            price: parseInt(listPrice) * 1000000,
+          },
+        };
+        delete _updateListing["_id"];
+        const res = await updateListing(_updateListing);
+        setShowModalItem(undefined);
         setToastMessage("Listing updated");
       }
     } catch (error) {
@@ -134,7 +146,8 @@ export default function AssetModal({
         showModalItem.unit,
         showModalItem.listing?.price
       );
-      console.log("txHash", txHash);
+      const res = await deleteListing(showModalItem.unit);
+      setShowModalItem(undefined);
       setToastMessage("Listing cancelled");
     } catch (error) {
       console.error(error);
@@ -142,10 +155,6 @@ export default function AssetModal({
     }
 
     setLoading(false);
-  }
-
-  if (showModalItem) {
-    console.log("showModalItem", showModalItem);
   }
 
   if (showModalItem !== undefined) {
@@ -163,7 +172,7 @@ export default function AssetModal({
           <div className="fixed inset-0 z-10 overflow-y-auto">
             <div className="flex min-h-full items-stretch justify-center text-center md:items-center md:px-2 lg:px-4">
               <div className="flex w-full transform text-left text-base transition md:my-8 md:max-w-2xl md:px-4 lg:max-w-4xl">
-                <div className="relative flex w-full items-center overflow-hidden bg-white px-4 pt-14 pb-8 shadow-2xl sm:px-6 sm:pt-8 md:p-6 lg:p-8">
+                <div className="h-96 relative flex w-full items-center overflow-hidden bg-white px-4 pt-14 pb-8 shadow-2xl sm:px-6 sm:pt-8 md:p-6 lg:p-8">
                   <button
                     type="button"
                     className="absolute top-4 right-4 text-gray-400 hover:text-gray-500 sm:top-8 sm:right-6 md:top-6 md:right-6 lg:top-8 lg:right-8"
@@ -202,15 +211,13 @@ export default function AssetModal({
                         {showModalItem.listing &&
                           showModalItem.owner != walletAddress && (
                             <button
-                              className={`mt-6 flex w-full items-center justify-center rounded-md border border-transparent py-3 px-8 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
-                                connected
-                                  ? "bg-indigo-600 hover:bg-indigo-700"
-                                  : "bg-gray-600 hover:bg-gray-700"
-                              }`}
+                              className={`mt-6 flex w-full items-center justify-center rounded-md border border-transparent py-3 px-8 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 bg-indigo-600 hover:bg-indigo-700`}
                               onClick={() => purchase()}
                               disabled={!connected || loading}
                             >
-                              {connected
+                              {loading
+                                ? "loading..."
+                                : connected
                                 ? "Purchase"
                                 : "Connect wallet to purchase"}
                             </button>
@@ -231,15 +238,16 @@ export default function AssetModal({
                                 value={listPrice}
                                 type="number"
                               />
-                              <button
-                                className="text-white absolute right-2.5 bottom-2.5 bg-indigo-600 hover:bg-indigo-700 font-medium rounded-lg text-sm px-4 py-2 dark:bg-indigo-600 dark:hover:bg-indigo-700"
+                              <TransactionButton
+                                connected={connected}
+                                loading={loading}
                                 onClick={() => list()}
-                                disabled={!connected || loading}
-                              >
-                                {showModalItem.listing === undefined
-                                  ? "List item for sale"
-                                  : "Update listing price"}
-                              </button>
+                                label={
+                                  showModalItem.listing === undefined
+                                    ? "List item for sale"
+                                    : "Update listing price"
+                                }
+                              />
                             </div>
                             {showModalItem.listing && (
                               <button
@@ -247,9 +255,11 @@ export default function AssetModal({
                                 onClick={() => cancel()}
                                 disabled={!connected || loading}
                               >
-                                {connected
+                                {loading
+                                  ? "loading..."
+                                  : connected
                                   ? "Cancel listing"
-                                  : "Connect wallet to purchase"}
+                                  : "Connect wallet to cancel listing"}
                               </button>
                             )}
                           </>
@@ -264,7 +274,27 @@ export default function AssetModal({
         </div>
       </>
     );
+  } else if (toastMessage) {
+    return (
+      <>
+        <Toast show={true}>
+          <p>{toastMessage}</p>
+        </Toast>
+      </>
+    );
   } else {
     return <></>;
   }
+}
+
+function TransactionButton({ connected, loading, onClick, label }) {
+  return (
+    <button
+      className={`text-white absolute right-2.5 bottom-2.5 bg-indigo-600 hover:bg-indigo-700 font-medium rounded-lg text-sm px-4 py-2 dark:bg-indigo-600 dark:hover:bg-indigo-700`}
+      onClick={onClick}
+      disabled={!connected || loading}
+    >
+      {loading ? "loading..." : label}
+    </button>
+  );
 }

@@ -18,7 +18,6 @@ export default function HomeListings() {
     async function load() {
       setLoading(true);
       let data = await getLatestListings();
-      console.log(111, data);
       setListings(data);
       setLoading(false);
     }

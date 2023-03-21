@@ -10,7 +10,7 @@ export default async function handler(
 
   let data = await collection
     .find({})
-    .sort({ "listing.date": -1 })
+    // .sort({ "listing.date": -1 })
     .limit(16)
     .toArray();
 

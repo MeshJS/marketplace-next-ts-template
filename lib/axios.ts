@@ -38,3 +38,15 @@ export async function searchListings(policy) {
 export async function getListingsUser(address) {
   return await get("getListingsUser", { address });
 }
+
+export async function addListing(newListing) {
+  return await post("addListing", { newListing });
+}
+
+export async function updateListing(updatedListing) {
+  return await post("updateListing", { updatedListing });
+}
+
+export async function deleteListing(unit) {
+  return await post("deleteListing", { unit });
+}

@@ -14,7 +14,7 @@ export default async function handler(
     .find({
       "listing.seller": address,
     })
-    .sort({ "listing.date": -1 })
+    // .sort({ "listing.date": -1 })
     .toArray();
 
   data.map((item) => {

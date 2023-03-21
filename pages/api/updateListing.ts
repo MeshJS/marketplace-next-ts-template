@@ -5,19 +5,15 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const policy = req.query.policy;
+  const updatedListing = req.body.updatedListing;
 
   const db = await getDatabase(process.env.MONGODB_DBNAME);
   const collection = db.collection("listings");
 
-  let data = await collection
-    .find({ unit: { $regex: policy } })
-    // .sort({ "listing.date": -1 })
-    .toArray();
+  let data = await collection.updateOne(
+    { unit: updatedListing.unit },
+    { $set: updatedListing }
+  );
 
-  data.map((item) => {
-    item["owner"] = item.listing.seller;
-  });
-
-  res.status(200).json(data);
+  res.status(200).json({ data: data });
 }
