@@ -7,7 +7,10 @@ import AssetModal from "@/components/AssetModal";
 import { Item } from "@/type/item";
 import { getListingsUser } from "@/lib/axios";
 
-const blockchainProvider = new KoiosProvider(process.env.NEXT_PUBLIC_NETWORK!);
+const blockchainProvider = new KoiosProvider(
+  "preprod",
+  process.env.NEXT_PUBLIC_KOIOS_API!
+);
 
 export default function Collection() {
   const [assets, setAssets] = useState<Item[]>([]);

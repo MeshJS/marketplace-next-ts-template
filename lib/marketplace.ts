@@ -2,7 +2,7 @@ import { BasicMarketplace } from "@meshsdk/contracts";
 import { KoiosProvider } from "@meshsdk/core";
 
 export function getMarketplace(wallet) {
-  const blockchainProvider = new KoiosProvider("preprod");
+  const blockchainProvider = new KoiosProvider("preprod", process.env.NEXT_PUBLIC_KOIOS_API!);
 
   const marketplace = new BasicMarketplace({
     fetcher: blockchainProvider,
